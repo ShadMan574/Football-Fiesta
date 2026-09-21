@@ -18,6 +18,23 @@ import {
   X
 } from 'lucide-react';
 
+const getGoogleDriveFileId = (value: string) => {
+  const match = value.match(/(?:\/file\/d\/|[?&]id=|\/uc\?id=)([a-zA-Z0-9_-]+)/);
+  return match?.[1] ?? null;
+};
+
+const normalizeImageUrl = (value: unknown) => {
+  if (typeof value !== 'string') return undefined;
+
+  const url = value.trim();
+  if (!url) return undefined;
+
+  const fileId = getGoogleDriveFileId(url);
+  return fileId
+    ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`
+    : url;
+};
+
 export default function PlayersDirectoryPage() {
   const { isAdmin, players, addPlayer, deletePlayer, bulkImportPlayers } = useApp();
 
@@ -91,7 +108,11 @@ export default function PlayersDirectoryPage() {
           position: (row.Position || row.position || 'FORWARD').toUpperCase() as PlayerPosition,
           isIcon: false,
           status: 'AVAILABLE' as PlayerStatus,
-          goalsScored: 0
+          goalsScored: 0,
+          photoUrl: normalizeImageUrl(
+            row['Photo URL'] || row['Photo Url'] || row.photoUrl || row.Photo ||
+            row.photo || row['Image URL'] || row['Image Url'] || row.imageUrl || row.Image || row.image
+          )
         }));
 
         if (imported.length > 0) {
@@ -376,7 +397,8 @@ export default function PlayersDirectoryPage() {
 
                 <div className="text-[11px] text-gray-400 bg-charcoal/80 p-3 rounded-xl border border-gray-800 space-y-1">
                   <p className="font-semibold text-gray-200">Required Column Headers:</p>
-                  <p className="font-mono text-primary-yellow">Name | Roll | Series | Position</p>
+                  <p className="font-mono text-primary-yellow">Name | Roll | Series | Position | Photo URL</p>
+                  <p>For Google Drive images, set General access to <strong className="text-gray-200">Anyone with the link</strong> and paste the file link.</p>
                 </div>
               </div>
             )}
